@@ -23,6 +23,7 @@ import { generateUrl } from '@nextcloud/router'
  * @spec openspec/changes/openconnector-api-sources/tasks.md#task-2.2
  */
 import { ref } from 'vue'
+import { fleetAppCandidates, resolveFleetAppId } from '../services/fleetAppId.js'
 
 /** @type {Map<string, boolean>} */
 const statusCache = new Map()
@@ -31,7 +32,10 @@ const statusCache = new Map()
  * Probe whether an app is available. Returns reactive `{ available, checked }`
  * refs that flip once the async probe resolves.
  *
- * @param {string} appId - the app id, e.g. `procest` or `openconnector`.
+ * @param {string} appId - the CANONICAL app id, e.g. `dossiq` or
+ *   `integriq`. Renamed fleet apps are resolved across every id they answer
+ *   to (see `services/fleetAppId.js`), so a caller never has to know which
+ *   spelling this instance is on.
  * @param {object} [opts] - options.
  * @param {string} [opts.probePath] - app route to probe when the webroots map
  *   is silent (default `/apps/{appId}/api`).
@@ -57,10 +61,13 @@ export function useAppStatus(appId, opts = {}) {
 			return available.value
 		}
 		// 1. Synchronous positive signal from the server-injected app webroots
-		// map (present when the app is installed + enabled).
+		// map (present when the app is installed + enabled). Every id the app
+		// answers to counts: an instance still on the pre-rename release
+		// registers only the old one, and reading just the new name there
+		// reports a perfectly healthy app as absent.
 		try {
 			const roots = (typeof OC !== 'undefined' && OC.appswebroots) || {}
-			if (roots[appId] !== undefined) {
+			if (fleetAppCandidates(appId).some((id) => roots[id] !== undefined)) {
 				available.value = true
 				checked.value = true
 				statusCache.set(appId, true)
@@ -70,7 +77,7 @@ export function useAppStatus(appId, opts = {}) {
 			// fall through to probe
 		}
 		// 2. Cheap authenticated probe.
-		const path = opts.probePath || `/apps/${appId}/api`
+		const path = opts.probePath || `/apps/${resolveFleetAppId(appId)}/api`
 		try {
 			await client.get(generateUrl(path))
 			available.value = true

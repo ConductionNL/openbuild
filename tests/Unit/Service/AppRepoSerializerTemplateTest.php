@@ -33,6 +33,7 @@ namespace OCA\Buildiq\Tests\Unit\Service;
 use OCA\Buildiq\Service\AppRepoParser;
 use OCA\Buildiq\Service\AppRepoSerializer;
 use OCA\Buildiq\Service\TemplateRepoSerializer;
+use OCA\Buildiq\Tests\Unit\Support\FakeSlugResolver;
 use OCA\OpenRegister\Db\RegisterMapper;
 use OCA\OpenRegister\Db\Schema;
 use OCA\OpenRegister\Db\SchemaMapper;
@@ -71,7 +72,8 @@ class AppRepoSerializerTemplateTest extends TestCase {
 			$registerMapper,
 			$this->schemaMapper,
 			$logger,
-			new TemplateRepoSerializer($this->schemaMapper, $logger)
+			new TemplateRepoSerializer($this->schemaMapper, $logger),
+			new FakeSlugResolver(['integriq'])
 		);
 	}//end setUp()
 

@@ -93,6 +93,9 @@ final class AutomationCompilerServiceTest extends TestCase {
 		$this->annotationInstaller = $this->createMock(ApprovalChainAnnotationInstaller::class);
 		$this->sequenceMapper = $this->createMock(TaskSequenceMapper::class);
 		$this->appManager = $this->createMock(IAppManager::class);
+		// FleetAppId::resolve() asks isInstalled() first; without this the id
+		// never resolves and every enabled check answers false.
+		$this->appManager->method('isInstalled')->willReturn(true);
 		$this->appManager->method('isEnabledForUser')->willReturn(true);
 		// The task-engine collaborators arrive through the container at USE
 		// time, so the mock answers per class name.

@@ -35,6 +35,7 @@ use OCA\Buildiq\Exception\AppRepoParseException;
 use OCA\Buildiq\Service\AppRepoParser;
 use OCA\Buildiq\Service\AppRepoSerializer;
 use OCA\Buildiq\Service\TemplateRepoSerializer;
+use OCA\Buildiq\Tests\Unit\Support\FakeSlugResolver;
 use OCA\OpenRegister\Db\RegisterMapper;
 use OCA\OpenRegister\Db\SchemaMapper;
 use PHPUnit\Framework\TestCase;
@@ -63,7 +64,8 @@ class AppRepoFormatV2Test extends TestCase {
 			$registerMapper,
 			$schemaMapper,
 			$logger,
-			new TemplateRepoSerializer($schemaMapper, $logger)
+			new TemplateRepoSerializer($schemaMapper, $logger),
+			new FakeSlugResolver(['integriq'])
 		);
 
 	}//end serializer()

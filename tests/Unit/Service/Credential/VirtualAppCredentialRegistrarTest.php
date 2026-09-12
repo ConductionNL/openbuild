@@ -33,6 +33,7 @@ use OCA\Buildiq\Service\ManifestResolverService;
 use OCP\IUser;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -124,16 +125,19 @@ class VirtualAppCredentialRegistrarTest extends TestCase {
 		$tokenFake = $this->tokenFake;
 		$registrarFake = $this->registrarFake;
 
-		return new class($this->manifestResolver, $this->logger, $tokenFake, $registrarFake, $tokenAvailable, $registrarAvailable) extends VirtualAppCredentialRegistrar {
+		$container = $this->createMock(ContainerInterface::class);
+
+		return new class($this->manifestResolver, $this->logger, $container, $tokenFake, $registrarFake, $tokenAvailable, $registrarAvailable) extends VirtualAppCredentialRegistrar {
 			public function __construct(
 				ManifestResolverService $manifestResolver,
 				LoggerInterface $logger,
+				ContainerInterface $container,
 				private $tokenFake,
 				private $registrarFake,
 				private bool $tokenAvailable,
 				private bool $registrarAvailable,
 			) {
-				parent::__construct($manifestResolver, $logger);
+				parent::__construct($manifestResolver, $logger, $container);
 			}
 
 			protected function resolveService(string $fqcn): ?object {

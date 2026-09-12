@@ -434,13 +434,13 @@ export default {
 		await this.load()
 		// REQ-PWA-006: soft-check Procest so the Workflows section degrades
 		// gracefully when it is absent.
-		const status = useAppStatus('procest')
+		const status = useAppStatus('dossiq')
 		status.check().then(() => {
 			this.procestAvailable = status.available.value
 		})
 		// REQ-NTS-005: soft-check nldesign so the Theme section degrades
 		// gracefully when it is absent.
-		const nldesignStatus = useAppStatus('nldesign')
+		const nldesignStatus = useAppStatus('thematiq')
 		nldesignStatus.check().then(() => {
 			this.nldesignAvailable = nldesignStatus.available.value
 		})

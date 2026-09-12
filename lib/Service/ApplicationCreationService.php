@@ -266,7 +266,9 @@ class ApplicationCreationService {
 			foreach ($versions as $versionDef) {
 				$versionSlug = (string)($versionDef['slug'] ?? '');
 				$versionName = (string)($versionDef['name'] ?? '');
-				$registerSlug = 'openbuild-' . $appSlug . '-' . $versionSlug;
+				// Prefix from the constant, never typed: see
+				// ApplicationVersionService::VERSION_REGISTER_PREFIX.
+				$registerSlug = ApplicationVersionService::VERSION_REGISTER_PREFIX . $appSlug . '-' . $versionSlug;
 
 				// 3a: Create ApplicationVersion
 				$versionManifest = $this->substituteVersionContext(

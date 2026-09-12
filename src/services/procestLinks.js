@@ -12,6 +12,7 @@
  * @spec openspec/changes/procest-workflow-attachments/specs/procest-workflow-attachments/spec.md#req-pwa-005
  */
 import { generateUrl } from '@nextcloud/router'
+import { fleetAppPath } from './fleetAppId.js'
 
 /**
  * Build the deep link to a Procest case (zaak) detail view by UUID.
@@ -24,7 +25,9 @@ export function buildProcestCaseUrl(caseUuid) {
 	if (!caseUuid) {
 		return ''
 	}
-	return generateUrl(`/apps/procest/cases/${encodeURIComponent(caseUuid)}`)
+	return generateUrl(
+		fleetAppPath('dossiq', `cases/${encodeURIComponent(caseUuid)}`),
+	)
 }
 
 /**

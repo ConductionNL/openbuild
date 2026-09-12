@@ -5,10 +5,18 @@ SPDX-FileCopyrightText: 2026 Conduction B.V.
 
 # Quarantined Newman collections
 
-CI runs `*.postman_collection.json` in `tests/integration/` **non-recursively**
-(`for collection in *.postman_collection.json` in ConductionNL/.github's
-`quality.yml`), so nothing in this directory is executed by the
-`Integration Tests (Newman)` job.
+A collection here is skipped because its `info.description` opens with an
+`@newman exclude <reason>` directive, which the shared `quality.yml` honours by
+name and reports as a skip with that reason.
+
+That directive is load-bearing now. This file used to say the job globbed
+`tests/integration/*.postman_collection.json` **non-recursively**, so a
+subdirectory was inert. On 2026-09-08 the shared workflow was changed to a
+recursive `find`, because its validate step already counted recursively and the
+two disagreed: the job announced 19 collections and ran 18. The moment that
+landed, this directory became live and the diff collection failed
+`Integration Tests (Newman)` on `development`. A quarantine that depends on how
+the runner happens to glob is not a quarantine; naming the exclusion is.
 
 A collection lives here for exactly one reason: **it asserts a contract the
 product does not implement, and rewriting it to match today's behaviour would

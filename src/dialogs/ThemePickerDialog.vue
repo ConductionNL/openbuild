@@ -34,7 +34,7 @@
 				{{
 					t(
 						'buildiq',
-						'NL Design (nldesign) is not installed or enabled on this instance.',
+						'Install or enable the Thematiq app to pick an NL Design theme.',
 					)
 				}}
 			</p>
@@ -359,6 +359,13 @@ export default {
 				return null
 			}
 			const theme = {
+				// NOT an app id, and NOT the `thematiq` rename. This is the
+				// DESIGN-SYSTEM id, an external Dutch-government standard that
+				// is not renaming. nextcloud-vue's `useScopedTheme.apply()`
+				// hard-compares `theme.source !== 'nldesign'` and bails, so
+				// "correcting" this literal would stop every saved theme from
+				// being applied while the diff read as a rename fix. The app id
+				// half is resolved separately, by the composable itself.
 				source: 'nldesign',
 				tokenSet: c.tokenSet,
 				tokenSetName: c.tokenSetName,

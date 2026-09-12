@@ -2022,7 +2022,9 @@ class ApplicationsController extends Controller {
 		// legacy un-namespaced slug AS LONG AS the existing register
 		// belongs to the caller; otherwise fall back to the
 		// owner-namespaced form.
-		$legacyRegisterSlug = 'openbuild-' . $newSlug;
+		// Prefix from the constant, never typed: see
+		// ApplicationVersionService::VERSION_REGISTER_PREFIX.
+		$legacyRegisterSlug = ApplicationVersionService::VERSION_REGISTER_PREFIX . $newSlug;
 
 		try {
 			$existing = $this->registerMapper->find($legacyRegisterSlug, _multitenancy: false);
@@ -2034,7 +2036,7 @@ class ApplicationsController extends Controller {
 
 			// Different user owns the org-wide slug — namespace ours.
 			return $this->findOrCreateRegister(
-				slug: 'openbuild-' . $ownerUid . '-' . $newSlug,
+				slug: ApplicationVersionService::VERSION_REGISTER_PREFIX . $ownerUid . '-' . $newSlug,
 				appSlug: $newSlug,
 				ownerUid: $ownerUid,
 			);

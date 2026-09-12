@@ -44,6 +44,7 @@ use OCP\ICache;
 use OCP\ICacheFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 
 /**
@@ -72,7 +73,8 @@ final class GitHubCatalogServiceTest extends TestCase {
 		return new GitHubCatalogService(
 			clientService: $this->clientService,
 			cacheFactory: $cacheFactory,
-			logger: new NullLogger()
+			logger: new NullLogger(),
+			container: $this->createMock(ContainerInterface::class)
 		);
 	}//end makeService()
 

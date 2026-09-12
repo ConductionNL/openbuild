@@ -18,7 +18,7 @@ Buildiq's manifest validation layer SHALL reject: an unknown `source`, a missing
 
 #### Scenario: Valid theme declaration passes validation
 
-<!-- @e2e exclude pure app-side manifest validation, covered by vitest tests/services/themeValidation.spec.js. -->
+<!-- @e2e exclude pure app-side manifest validation, covered by vitest tests/composables/useManifestValidator.spec.js. -->
 
 - **GIVEN** a virtual app manifest
 - **WHEN** it declares `runtime.theme: { source: "nldesign", tokenSet: "amsterdam", tokenSetName: "Gemeente Amsterdam", preview: { primaryColor: "#004699", backgroundColor: "#FFFFFF" } }`
@@ -27,7 +27,7 @@ Buildiq's manifest validation layer SHALL reject: an unknown `source`, a missing
 
 #### Scenario: Unknown source is rejected
 
-<!-- @e2e exclude pure app-side manifest validation, covered by vitest tests/services/themeValidation.spec.js. -->
+<!-- @e2e exclude pure app-side manifest validation, covered by vitest tests/composables/useManifestValidator.spec.js. -->
 
 - **WHEN** the manifest declares `runtime.theme.source: "material"`
 - **THEN** the validator reports `buildiq.theme.error.unknown-source` against the theme block

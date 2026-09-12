@@ -40,6 +40,7 @@ use OCA\Buildiq\Service\AppRepoSerializer;
 use OCA\Buildiq\Service\FlowAgentChannelCollector;
 use OCA\Buildiq\Service\FlowAndAgentExportBundler;
 use OCA\Buildiq\Service\TemplateRepoSerializer;
+use OCA\Buildiq\Tests\Unit\Support\FakeSlugResolver;
 use OCA\OpenRegister\Db\Flow;
 use OCA\OpenRegister\Db\FlowMapper;
 use OCA\OpenRegister\Db\RegisterMapper;
@@ -95,6 +96,7 @@ class AppRepoFlowAgentChannelTest extends TestCase {
 			$schemaMapper,
 			$logger,
 			new TemplateRepoSerializer($schemaMapper, $logger),
+			new FakeSlugResolver(['integriq']),
 			null,
 			new FlowAgentChannelCollector(
 				new FlowAndAgentExportBundler($flowMapper, $objectService, $this->createMock(IAppManager::class), $logger),
@@ -237,7 +239,8 @@ class AppRepoFlowAgentChannelTest extends TestCase {
 			$registerMapper,
 			$schemaMapper,
 			$logger,
-			new TemplateRepoSerializer($schemaMapper, $logger)
+			new TemplateRepoSerializer($schemaMapper, $logger),
+			new FakeSlugResolver(['integriq'])
 		);
 
 		[$application, $version] = $this->app(['flows' => [['flow' => '00000000-0000-0000-0000-000000000000']]]);

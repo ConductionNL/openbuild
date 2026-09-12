@@ -17,8 +17,8 @@
  * Non-destructive by construction: push parents the commit on the current head so
  * it ADDS a commit (never a force overwrite; a moved head surfaces `push_conflict`),
  * and pull always yields a draft the owner reviews and promotes via the existing
- * release flow. The broker is resolved lazily (`class_exists` + `Server::get`,
- * mirroring RemoteTemplateStoreService); when it is absent, publish fails closed
+ * release flow. The broker is resolved lazily (`class_exists` + the injected
+ * container, mirroring RemoteTemplateStoreService); when it is absent, publish fails closed
  * (reported unavailable) rather than falling back to any token-bearing path.
  *
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use OCA\Buildiq\Exception\AppRepoParseException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\RegisterMapper;
 use OCA\OpenRegister\Db\SchemaMapper;
-use OCP\Server;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -137,6 +137,8 @@ class GitHubAppSyncService {
 	 * @param GitHubCatalogService $catalogService Repo fetch + commit-sha resolution (change 2).
 	 * @param AppChannelApplier $channelApplier Applies the v2 repo channels (apply-v2-channels).
 	 * @param LoggerInterface $logger PSR logger (secret-free diagnostics only).
+	 * @param ContainerInterface $container DI container, resolves the OpenRegister
+	 *                                      broker at call time (never the global server).
 	 *
 	 * @return void
 	 */
@@ -149,6 +151,7 @@ class GitHubAppSyncService {
 		private readonly GitHubCatalogService $catalogService,
 		private readonly AppChannelApplier $channelApplier,
 		private readonly LoggerInterface $logger,
+		private readonly ContainerInterface $container,
 	) {
 	}//end __construct()
 
@@ -1208,7 +1211,7 @@ class GitHubAppSyncService {
 		}
 
 		try {
-			$broker = Server::get(self::BROKER_CLASS);
+			$broker = $this->container->get(self::BROKER_CLASS);
 			$response = $broker->request(
 				$credentialId,
 				self::APP_ID,

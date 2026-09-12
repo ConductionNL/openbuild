@@ -66,6 +66,7 @@ import { generateUrl } from '@nextcloud/router'
 import ConfirmActionDialog from '../../dialogs/ConfirmActionDialog.vue'
 import ConnectorFieldMapper from './ConnectorFieldMapper.vue'
 import ConnectorSourcePicker from './ConnectorSourcePicker.vue'
+import { fleetAppPath } from '../../services/fleetAppId.js'
 
 export default {
 	name: 'DataSourceOriginToggle',
@@ -221,7 +222,9 @@ export default {
 			this.sampleLoading = true
 			try {
 				const path = String(endpointPath).replace(/^\/+/, '')
-				const url = generateUrl(`/apps/openconnector/api/endpoint/${path}`)
+				const url = generateUrl(
+					fleetAppPath('integriq', `api/endpoint/${path}`),
+				)
 				const { data } = await axios.get(url, {
 					params: this.connector.query || {},
 				})

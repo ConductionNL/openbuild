@@ -44,7 +44,7 @@ scope. The endpoint SHALL be registered via `appinfo/routes.php`
 (ADR-016) with `#[NoAdminRequired]` and a route-auth posture that
 treats it as authenticated-user-readable.
 
-@e2e exclude pure-backend REST endpoint — manifest fetch, 404 for unknown slug, and auth posture verified by Newman/manifest-endpoint.spec.ts; no separate UI surface
+@e2e exclude pure-backend REST endpoint; manifest fetch, 404 for unknown slug and auth posture are verified by Newman, in tests/integration/buildiq.postman_collection.json (Manifest endpoint folder) and tests/integration/buildiq-api-contract.postman_collection.json (2. Manifest). No separate UI surface
 
 **ID:** REQ-OBR-001
 

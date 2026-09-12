@@ -112,6 +112,7 @@ declare(strict_types=1);
 namespace OCA\Buildiq\Service;
 
 use OCA\Buildiq\Exception\UnsupportedAutomationCombinationException;
+use OCA\Buildiq\Support\FleetAppId;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use Psr\Container\ContainerInterface;
 use OCA\OpenRegister\Db\Schema;
@@ -170,6 +171,16 @@ class AutomationCompilerService {
 	 */
 	private const APPROVAL_CHAINS_KEY = 'x-openregister-approval-chains';
 
+	/**
+	 * Canonical id of the document app (`docudesk` renamed to `filinq`).
+	 *
+	 * Never compared against `IAppManager` directly: both ids are in the
+	 * field at once, so a literal answers false on half the fleet and the
+	 * compile fails claiming the app is absent when it is installed.
+	 * {@see FleetAppId} resolves which of the two this instance has.
+	 *
+	 * @var string
+	 */
 	private const DOCUDESK_APP_ID = 'filinq';
 
 	/**
@@ -646,6 +657,11 @@ class AutomationCompilerService {
 	 *
 	 * @spec openspec/changes/automation-document-action/tasks.md#1.2
 	 * @spec openspec/changes/automation-document-action/tasks.md#1.3
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) FleetAppId is a stateless
+	 *  resolver over a constant map, with no state to inject and nothing to
+	 *  substitute in a test. Injecting it would add a constructor argument
+	 *  to every consumer to no end.
 	 */
 	private function assertGenerateDocumentActions(array $actions): void {
 		$generateDocumentActions = array_values(
@@ -659,7 +675,7 @@ class AutomationCompilerService {
 			return;
 		}
 
-		if ($this->appManager->isEnabledForUser(self::DOCUDESK_APP_ID) === false) {
+		if (FleetAppId::isEnabledForUser(appManager: $this->appManager, canonical: self::DOCUDESK_APP_ID) === false) {
 			throw new UnsupportedAutomationCombinationException(
 				message: 'The "generateDocument" action requires the "' . self::DOCUDESK_APP_ID . '" app, '
 				. 'which is not installed or enabled on this instance.'

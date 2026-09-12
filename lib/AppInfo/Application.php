@@ -44,6 +44,7 @@ use OCA\Buildiq\Service\SettingsService;
 use OCA\Buildiq\Settings\AdminSettings;
 use OCA\OpenRegister\AppHost\Bootstrap;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Contract\RegisterSlugResolverInterface;
 use OCA\OpenRegister\Event\TaskSequenceCompletedEvent;
 use OCA\OpenRegister\Event\TaskTerminalEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
@@ -111,6 +112,32 @@ class Application extends App implements IBootstrap {
 			ObjectServiceInterface::class,
 			'OCA\OpenRegister\Service\ObjectService'
 		);
+
+		// The register-slug resolver, bound the same way and for the same reason.
+		//
+		// Register slugs live in `openregister_registers`, and nine fleet apps
+		// ship a repair step that renames theirs. The step is per instance, so
+		// both slugs are live across the estate at once and a literal is wrong
+		// on half of it. The old-slug case is the quiet one: OpenRegister finds
+		// no register, matches no rows, and returns an empty set that is
+		// byte-for-byte what a healthy empty register returns. No exception, no
+		// 404, no log line. This app read the connectors channel that way.
+		//
+		// Verified against this container, not assumed: OpenRegister registers
+		// the resolver in its OWN container, so nothing of that registration
+		// reaches here. What reaches here is the alias stated here plus autowiring
+		// of the concrete class, whose only dependencies are `RegisterMapper`
+		// and `LoggerInterface`. Both resolve from a leaf app's DIContainer, and
+		// the interface then answers with a live resolution. The one thing lost
+		// is OpenRegister's shared-instance registration: a leaf container
+		// autowires a fresh resolver per injection point, so the request-scoped
+		// memo is per consumer rather than per request. That costs one indexed
+		// read per consumer and changes no answer.
+		$context->registerServiceAlias(
+			RegisterSlugResolverInterface::class,
+			'OCA\OpenRegister\Service\RegisterSlugResolver'
+		);
+
 		// ADR-040 AppHost adoption: one call wires the standard plumbing —
 		// the generic dashboard/settings/preferences controllers, the
 		// observability (health + metrics) controllers, the install repair

@@ -6,7 +6,7 @@
  *
  * Spec: procest-workflow-attachments (REQ-PWA-005).
  */
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@nextcloud/router', () => ({ generateUrl: (p) => p }))
 
@@ -18,8 +18,26 @@ import {
 const UUID = '11111111-2222-3333-4444-555555555555'
 
 describe('procestLinks', () => {
-	it('builds a case URL by UUID', () => {
+	afterEach(() => {
+		delete globalThis.OC
+	})
+
+	it('builds a case URL by UUID on the current id', () => {
+		globalThis.OC = { appswebroots: { dossiq: '/apps/dossiq' } }
+		expect(buildProcestCaseUrl(UUID)).toBe(`/apps/dossiq/cases/${UUID}`)
+	})
+	it('falls back to the pre-rename id when that is what is installed', () => {
+		// An instance still on the `procest` release registers only that id.
+		// Writing `dossiq` unconditionally would 404 there, and the panel reads
+		// a 404 as "no case", so the deep link would just stop working.
+		globalThis.OC = { appswebroots: { procest: '/apps/procest' } }
 		expect(buildProcestCaseUrl(UUID)).toBe(`/apps/procest/cases/${UUID}`)
+	})
+	it('prefers the current id when both are somehow present', () => {
+		globalThis.OC = {
+			appswebroots: { dossiq: '/apps/dossiq', procest: '/apps/procest' },
+		}
+		expect(buildProcestCaseUrl(UUID)).toBe(`/apps/dossiq/cases/${UUID}`)
 	})
 	it('returns empty for no UUID', () => {
 		expect(buildProcestCaseUrl('')).toBe('')

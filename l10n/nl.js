@@ -53,7 +53,7 @@ OC.L10N.register(
         "Choose an NL Design theme": "Kies een NL Design-thema",
         "Default (Nextcloud)": "Standaard (Nextcloud)",
         "Live preview in the designer": "Live voorbeeld in de ontwerper",
-        "NL Design (nldesign) is not installed or enabled on this instance.": "NL Design (nldesign) is niet geïnstalleerd of ingeschakeld op deze instantie.",
+        "Install or enable the Thematiq app to pick an NL Design theme.": "Installeer of activeer de Thematiq-app om een NL Design-thema te kiezen.",
         "NL Design is not available. An existing theme stays visible and removable, but you cannot change it.": "NL Design is niet beschikbaar. Een bestaand thema blijft zichtbaar en verwijderbaar, maar je kunt het niet wijzigen.",
         "NL Design is not installed or enabled on this instance.": "NL Design is niet geïnstalleerd of ingeschakeld op deze instantie.",
         "Remove the theme? This app will render in the default Nextcloud styling.": "Het thema verwijderen? Deze app wordt weergegeven in de standaard Nextcloud-stijl.",

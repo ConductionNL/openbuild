@@ -15,7 +15,10 @@
  *     auto-granted.
  *   - Walk `manifest.pages[].config.{register,schema}` to derive the
  *     schema-set scoped to the version's per-version register
- *     (`buildiq-{appSlug}-{versionSlug}`).
+ *     (`openbuild-{appSlug}-{versionSlug}`, from
+ *     ApplicationVersionService::VERSION_REGISTER_PREFIX, which is frozen at
+ *     the old prefix on purpose and is what the applicationVersion schema
+ *     pattern accepts).
  *   - Fan out four KPI calls + one chart call to OpenRegister mappers /
  *     services and assemble the response payload.
  *
@@ -214,6 +217,17 @@ class ApplicationInsightsService {
 	 * pre-validate at the controller layer; the defensive check here keeps
 	 * the service safe in isolation).
 	 *
+	 * The per-version register fallback takes its prefix from
+	 * {@see ApplicationVersionService::VERSION_REGISTER_PREFIX}. This method
+	 * used to type it as `sprintf('buildiq-%s-%s', ...)`, and that named a
+	 * register no instance can hold: every writer of a per-version register
+	 * uses the constant, which is `openbuild-` and is frozen there on purpose,
+	 * and the applicationVersion schema pins `"pattern": "^openbuild-..."` so a
+	 * `buildiq-` register is rejected at write time. The read then matched
+	 * nothing and the panel showed zero objects, zero files and zero audit
+	 * events, which is byte for byte what a real but empty version looks like.
+	 * {@see \OCA\Buildiq\Tests\Unit\Support\RegisterSlugPinTest} guards it now.
+	 *
 	 * @param string $appUuid Application UUID (path parameter).
 	 * @param string $versionUuid ApplicationVersion UUID (path parameter).
 	 * @param string $window Window string — one of `7d`, `30d`, `90d`.
@@ -275,15 +289,14 @@ class ApplicationInsightsService {
 				return $payload;
 			}
 
-			// Prefer the version's REAL register. Versions may share production's
-			// register (manifest-only versioning), so the
-			// `buildiq-{appSlug}-{versionSlug}` convention can name a register
-			// that does not exist (yielding empty KPIs). Fall back to the
-			// convention only when the version carries no register.
+			// Prefer the version's REAL register; fall back to the per-version
+			// naming convention only when the version carries none. The prefix
+			// comes from ApplicationVersionService and is never typed here: see
+			// this method's docblock.
 			$versionSlug = (string)($version['slug'] ?? '');
 			$registerSlug = (string)($version['register'] ?? '');
 			if ($registerSlug === '') {
-				$registerSlug = sprintf('buildiq-%s-%s', $appSlug, $versionSlug);
+				$registerSlug = ApplicationVersionService::VERSION_REGISTER_PREFIX . $appSlug . '-' . $versionSlug;
 			}
 
 			$manifest = $this->extractManifest(version: $version);

@@ -37,6 +37,29 @@
              referencedClass suppression: the refusal is caught and rethrown, so
              psalm has to know it is Throwable. -->
         <file name="tests/stubs/openregister-dmn.stub.php" preloadClasses="true" />
+        <!--
+            OpenRegister's data-access contract, which this app's lib/ typehints
+            but does not own. OpenRegister supplies it at RUNTIME; these are
+            analysis stubs only.
+
+            These four were `referencedClass` suppressions until now, because
+            conduction/hydra-gates declares no autoload section, so nothing under
+            hydra-gates/contracts/ is autoloadable and this config ignores vendor
+            outright. A stub is read anyway: stubs are loaded explicitly rather
+            than scanned, so ignoreFiles does not reach them.
+
+            The suppression was not cosmetic and the swap is not either. A
+            suppressed class makes every value flowing through it `mixed`, so
+            psalm stops analysing the very branch this contract exists to force.
+            decidesk made the same swap and psalm immediately found a real
+            nullable that had shipped behind the suppression. The stub is what
+            lets psalm see that `RegisterSlugResolution::isResolved()` returns
+            bool and that `->slug` is `?string`.
+        -->
+        <file name="vendor/conduction/hydra-gates/hydra-gates/contracts/ObjectServiceInterface.php" />
+        <file name="vendor/conduction/hydra-gates/hydra-gates/contracts/ObjectEntityInterface.php" />
+        <file name="vendor/conduction/hydra-gates/hydra-gates/contracts/RegisterSlugResolution.php" />
+        <file name="vendor/conduction/hydra-gates/hydra-gates/contracts/RegisterSlugResolverInterface.php" />
     </stubs>
     <issueHandlers>
         <UndefinedDocblockClass errorLevel="suppress"/>
@@ -122,20 +145,6 @@
                     <referencedClass name="OCA\OpenRegister\Service\Task\TaskState"/>
                     <referencedClass name="OCA\OpenRegister\Service\ApprovalChainAnnotationInstaller"/>
                 <referencedClass name="OCA\OpenRegister\Service\ObjectService"/>
-                <!-- The interface ObjectService implements — used wherever a
-                     class types its collaborator against the contract rather
-                     than the concrete class (ADR-022). Pre-existing across
-                     ~10 files (VersionPromotionService, RuleEngineService,
-                     GitHubAppSyncService, IconService, ManifestResolverService
-                     among them) that were already red before this entry;
-                     app-repo-format-flow-agent-export adds more of the same
-                     usage rather than a new class of error. -->
-                <referencedClass name="OCA\OpenRegister\Contract\ObjectServiceInterface"/>
-                <!-- The per-object counterpart of the above — ObjectEntity's
-                     own contract, e.g. ObjectService::find()'s return type.
-                     Pre-existing in SeedHelloWorldFixture.php, already red
-                     before this entry. -->
-                <referencedClass name="OCA\OpenRegister\Contract\ObjectEntityInterface"/>
                 <!-- The sanctioned single entry point for flows (ADR-022) —
                      consumed by FlowChannelProvisioner so applying a published
                      `flows/` channel creates a real OpenRegister Flow entity

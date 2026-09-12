@@ -11,9 +11,8 @@
  * fail-closed guards.
  *
  * There is deliberately no happy-path test here. `push()` resolves the broker through
- * `Server::get()`, which needs the Nextcloud container; with OpenRegister absent from
- * the unit-test autoloader `isBrokerAvailable()` is false and the service fails closed —
- * which is exactly the behaviour asserted below. The wire surface is covered where it is
+ * the injected container; the container mock below resolves nothing, so the service
+ * fails closed — which is exactly the behaviour asserted below. The wire surface is covered where it is
  * actually exercisable: against the live broker on the dev instance.
  *
  * @category Test
@@ -37,6 +36,7 @@ namespace OCA\Buildiq\Tests\Unit\Service;
 
 use OCA\Buildiq\Service\GitHubPushService;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
 
@@ -73,6 +73,15 @@ final class GitHubPushServiceTest extends TestCase {
 			rmdir($treeDir);
 		}
 	}//end removeTree()
+
+	/**
+	 * Build the service around a container that resolves nothing.
+	 *
+	 * @return GitHubPushService
+	 */
+	private function makeService(): GitHubPushService {
+		return new GitHubPushService(new NullLogger(), $this->createMock(ContainerInterface::class));
+	}//end makeService()
 
 	/**
 	 * The core regression: NO method on this service may take a PAT.
@@ -143,8 +152,8 @@ final class GitHubPushServiceTest extends TestCase {
 	 * Fail closed when the broker cannot serve the call: no fallback, no push.
 	 *
 	 * OpenRegister IS on the unit-test autoloader, so `isBrokerAvailable()` is true
-	 * here and `push()` gets as far as the first broker call — which cannot resolve a
-	 * real `Server::get()` container in a unit test. It must throw rather than degrade
+	 * here and `push()` gets as far as the first broker call — which the injected
+	 * container mock cannot resolve. It must throw rather than degrade
 	 * to any token-bearing path. Whether the broker is missing, denies the call, or is
 	 * simply unreachable, the outcome has to be the same: no repository is created.
 	 *
@@ -152,7 +161,7 @@ final class GitHubPushServiceTest extends TestCase {
 	 */
 	public function testPushFailsClosedWhenTheBrokerCannotServeTheCall(): void {
 		$treeDir = $this->makeTree();
-		$service = new GitHubPushService(new NullLogger());
+		$service = $this->makeService();
 
 		try {
 			$service->push(
@@ -165,9 +174,9 @@ final class GitHubPushServiceTest extends TestCase {
 			);
 			self::fail('push() must throw when the broker cannot serve the call.');
 		} catch (RuntimeException $e) {
-			// Regression for the swallowed-error-detail bug: without a real
-			// Nextcloud container, `Server::get(self::BROKER_CLASS)` cannot
-			// resolve a live broker, so `brokerCall()` never reaches a genuine
+			// Regression for the swallowed-error-detail bug: the injected
+			// container mock resolves no live broker, so `brokerCall()` never
+			// reaches a genuine
 			// 2xx/non-2xx response and falls through to its `HTTP 0` failure
 			// shape (verified against the real CI PHPUnit environment, not
 			// assumed) — either way, the thrown message must now carry that
@@ -197,7 +206,7 @@ final class GitHubPushServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testBrokerAvailabilityIsCheckedAgainstOpenRegister(): void {
-		$service = new GitHubPushService(new NullLogger());
+		$service = $this->makeService();
 
 		self::assertTrue(
 			$service->isBrokerAvailable(),
@@ -213,7 +222,7 @@ final class GitHubPushServiceTest extends TestCase {
 	 */
 	public function testPushRefusesAnEmptyCredential(): void {
 		$treeDir = $this->makeTree();
-		$service = new GitHubPushService(new NullLogger());
+		$service = $this->makeService();
 
 		$this->expectException(RuntimeException::class);
 
@@ -236,12 +245,12 @@ final class GitHubPushServiceTest extends TestCase {
 	 * flows into `postJson()`/`createRepo()`'s thrown message — not discarded.
 	 *
 	 * Exercised directly against the pulled-out assembly method, decoupled from
-	 * `Server::get()`, which cannot resolve a real container in a unit test.
+	 * the container lookup.
 	 *
 	 * @return void
 	 */
 	public function testFailureDetailFromStatusIncludesStatusAndBody(): void {
-		$service = new GitHubPushService(new NullLogger());
+		$service = $this->makeService();
 		$method = new \ReflectionMethod(GitHubPushService::class, 'failureDetailFromStatus');
 		$method->setAccessible(true);
 
@@ -257,7 +266,7 @@ final class GitHubPushServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testFailureDetailFromStatusOmitsBodySuffixWhenBodyIsEmpty(): void {
-		$service = new GitHubPushService(new NullLogger());
+		$service = $this->makeService();
 		$method = new \ReflectionMethod(GitHubPushService::class, 'failureDetailFromStatus');
 		$method->setAccessible(true);
 
@@ -273,7 +282,7 @@ final class GitHubPushServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testFailureDetailFromStatusTruncatesAnOversizedBody(): void {
-		$service = new GitHubPushService(new NullLogger());
+		$service = $this->makeService();
 		$method = new \ReflectionMethod(GitHubPushService::class, 'failureDetailFromStatus');
 		$method->setAccessible(true);
 
@@ -291,7 +300,7 @@ final class GitHubPushServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testScrubRedactsAGitHubPatShapedToken(): void {
-		$service = new GitHubPushService(new NullLogger());
+		$service = $this->makeService();
 		$method = new \ReflectionMethod(GitHubPushService::class, 'scrub');
 		$method->setAccessible(true);
 
@@ -310,7 +319,7 @@ final class GitHubPushServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testFailureSuffixFormatsTheCapturedDetail(): void {
-		$service = new GitHubPushService(new NullLogger());
+		$service = $this->makeService();
 
 		$detailProperty = new \ReflectionProperty(GitHubPushService::class, 'lastFailureDetail');
 		$detailProperty->setAccessible(true);

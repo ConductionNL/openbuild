@@ -23,7 +23,7 @@
  *      (identity-only, pending admin approval; itself idempotent + never-throw).
  *
  * OpenRegister is a hard dependency of Buildiq, but the two credential
- * services are resolved lazily via `class_exists` + `OCP\Server::get` and every
+ * services are resolved lazily via `class_exists` + the injected container and every
  * path is wrapped so onboarding NEVER blocks or fails a publish — a broker/
  * Doriath hiccup must not stop an app going live.
  *
@@ -48,16 +48,16 @@ namespace OCA\Buildiq\Service\Credential;
 
 use OCA\Buildiq\Service\ManifestResolverService;
 use OCP\IUser;
-use OCP\Server;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
  * Triggers OpenRegister credential-broker onboarding for a published virtual app.
  *
- * @SuppressWarnings(PHPMD.StaticAccess) The OpenRegister credential services are
- *   resolved via `OCP\Server::get` behind `class_exists` guards so the exact
- *   onboarding wiring stays owned by OpenRegister, resolved at call time.
+ * The OpenRegister credential services are resolved through the injected
+ * container behind `class_exists` guards so the exact onboarding wiring stays
+ * owned by OpenRegister, resolved at call time.
  *
  * @spec openregister/openspec/changes/per-app-doriath-application/specs/credential-broker/spec.md#per-app-doriath-application-registration
  */
@@ -88,12 +88,15 @@ class VirtualAppCredentialRegistrar {
 	 *
 	 * @param ManifestResolverService $manifestResolver Version-aware manifest resolver (reads `credentials[]`).
 	 * @param LoggerInterface $logger Secret-free diagnostics.
+	 * @param ContainerInterface $container DI container, resolves the OpenRegister
+	 *                                      credential services at call time (never the global server).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private readonly ManifestResolverService $manifestResolver,
 		private readonly LoggerInterface $logger,
+		private readonly ContainerInterface $container,
 	) {
 	}//end __construct()
 
@@ -258,7 +261,7 @@ class VirtualAppCredentialRegistrar {
 		}
 
 		try {
-			return Server::get($fqcn);
+			return $this->container->get($fqcn);
 		} catch (Throwable $e) {
 			$this->logger->warning('Buildiq: failed to resolve {fqcn}', ['fqcn' => $fqcn, 'exception' => $e->getMessage()]);
 			return null;

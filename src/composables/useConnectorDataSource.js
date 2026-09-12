@@ -25,6 +25,7 @@ import { generateUrl } from '@nextcloud/router'
  */
 import { ref } from 'vue'
 import { cacheKey, readThrough, ttlToMs } from '../services/connectorCache.js'
+import { fleetAppPath } from '../services/fleetAppId.js'
 import { extractItems, projectFields } from '../services/selectors.js'
 
 /**
@@ -84,7 +85,7 @@ export function useConnectorDataSource(opts = {}) {
 		// endpointPath is validated builder-side to be scheme/host-free; the
 		// runtime call is always same-origin to OpenConnector.
 		const path = String(binding.endpointPath || '').replace(/^\/+/, '')
-		const url = generateUrl(`/apps/openconnector/api/endpoint/${path}`)
+		const url = generateUrl(fleetAppPath('integriq', `api/endpoint/${path}`))
 		const response = await client.get(url, {
 			params: binding.query || {},
 		})

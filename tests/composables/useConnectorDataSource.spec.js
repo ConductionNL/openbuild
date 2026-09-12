@@ -37,13 +37,39 @@ describe('useConnectorDataSource', () => {
 		await flush()
 		expect(loading.value).toBe(false)
 		expect(data.value).toEqual([{ name: 'Acme', kvk: '123' }])
-		// Same-origin call to OpenConnector, no extra auth headers.
+		// Same-origin call to Integriq, no extra auth headers. The app
+		// segment is resolved, not written: with no webroots map the canonical
+		// id is used.
 		expect(client.get).toHaveBeenCalledWith(
-			'/apps/openconnector/api/endpoint/kvk/companies',
+			'/apps/integriq/api/endpoint/kvk/companies',
 			{ params: {} },
 		)
 		const callOpts = client.get.mock.calls[0][1]
 		expect(callOpts.headers).toBeUndefined()
+	})
+
+	it('calls the pre-rename app id when that is the one installed', async () => {
+		// An instance still on `openconnector` registers only that id. A
+		// hardcoded `integriq` 404s there, and fetchRaw's caller degrades a
+		// failed fetch to an empty widget, so the data source would silently
+		// render nothing.
+		globalThis.OC = { appswebroots: { openconnector: '/apps/openconnector' } }
+		try {
+			const client = { get: vi.fn().mockResolvedValue({ data: {} }) }
+			const { load } = useConnectorDataSource({
+				appId: 'app1',
+				binding: { endpointPath: 'kvk/companies' },
+				client,
+			})
+			await load()
+			await flush()
+			expect(client.get).toHaveBeenCalledWith(
+				'/apps/openconnector/api/endpoint/kvk/companies',
+				{ params: {} },
+			)
+		} finally {
+			delete globalThis.OC
+		}
 	})
 
 	it('treats the response root as a single item when itemsPath is absent', async () => {

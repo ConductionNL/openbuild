@@ -17,9 +17,21 @@ import { generateUrl } from '@nextcloud/router'
  * @spec openspec/changes/procest-workflow-attachments/specs/procest-workflow-attachments/spec.md#req-pwa-003
  */
 import { ref } from 'vue'
+import { fleetAppPath } from '../services/fleetAppId.js'
 import { caseUuidFromReference } from '../services/procestLinks.js'
 
-const ZRC = '/apps/procest/api/zgw/zaken/v1'
+/**
+ * The ZRC (Zaken API) base path on the id dossiq is installed under here.
+ *
+ * A function, not a constant: `OC.appswebroots` is populated by the page
+ * bootstrap and this module is imported by the webpack entry, so reading it
+ * at module scope races whatever fills it in.
+ *
+ * @return {string} - e.g. `/apps/dossiq/api/zgw/zaken/v1`.
+ */
+function zrc() {
+	return fleetAppPath('dossiq', 'api/zgw/zaken/v1')
+}
 
 /**
  * Render a `descriptionTemplate` with `{{objectProperty}}` placeholders
@@ -92,7 +104,7 @@ export function useProcestCase(opts = {}) {
 			return null
 		}
 		try {
-			const url = generateUrl(`${ZRC}/zaken/_zoek`)
+			const url = generateUrl(`${zrc()}/zaken/_zoek`)
 			const { data } = await client.post(url, { kenmerk: uuid })
 			const results = (data && (data.results || data.zaken || data)) || []
 			return Array.isArray(results) && results.length ? results[0] : null
@@ -124,7 +136,7 @@ export function useProcestCase(opts = {}) {
 				),
 			}
 			const { data: zaak } = await client.post(
-				generateUrl(`${ZRC}/zaken`),
+				generateUrl(`${zrc()}/zaken`),
 				body,
 			)
 			await writeBack(object, zaak)
@@ -213,13 +225,16 @@ export function useProcestCase(opts = {}) {
 		noAccess.value = false
 		try {
 			const { data: zaak } = await client.get(
-				generateUrl(`${ZRC}/zaken/${uuid}`),
+				generateUrl(`${zrc()}/zaken/${uuid}`),
 			)
 			caseDetail.value = zaak
 			try {
-				const { data } = await client.get(generateUrl(`${ZRC}/statussen`), {
-					params: { zaak: uuid },
-				})
+				const { data } = await client.get(
+					generateUrl(`${zrc()}/statussen`),
+					{
+						params: { zaak: uuid },
+					},
+				)
 				const list = (data && (data.results || data)) || []
 				statusHistory.value = Array.isArray(list) ? list : []
 			} catch {

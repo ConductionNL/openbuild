@@ -15,8 +15,8 @@
  * supplies an allowed broker `github` credential the call is transparently
  * upgraded through OpenRegister's CredentialBrokerService so the token stays
  * broker-side and NEVER enters Buildiq. The broker is resolved lazily
- * (`class_exists` + `Server::get`, mirroring RemoteTemplateStoreService) so a
- * missing/older OpenRegister falls back to anonymous cleanly. Results + descriptors
+ * (`class_exists` + the injected container, mirroring RemoteTemplateStoreService)
+ * so a missing/older OpenRegister falls back to anonymous cleanly. Results + descriptors
  * are cached short-TTL against the tight anonymous rate limit; the raw GitHub body
  * and any token are never returned or logged.
  *
@@ -44,7 +44,7 @@ namespace OCA\Buildiq\Service;
 use OCP\Http\Client\IClientService;
 use OCP\ICache;
 use OCP\ICacheFactory;
-use OCP\Server;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -164,6 +164,8 @@ class GitHubCatalogService {
 	 * @param IClientService $clientService NC HTTP client factory (anonymous calls).
 	 * @param ICacheFactory $cacheFactory NC cache factory (short-TTL server cache).
 	 * @param LoggerInterface $logger PSR logger (secret-free diagnostics only).
+	 * @param ContainerInterface $container DI container, resolves the OpenRegister
+	 *                                      broker at call time (never the global server).
 	 *
 	 * @return void
 	 */
@@ -171,6 +173,7 @@ class GitHubCatalogService {
 		private readonly IClientService $clientService,
 		ICacheFactory $cacheFactory,
 		private readonly LoggerInterface $logger,
+		private readonly ContainerInterface $container,
 	) {
 		$cache = null;
 		if ($cacheFactory->isAvailable() === true) {
@@ -907,7 +910,7 @@ class GitHubCatalogService {
 	 */
 	private function brokerGet(string $path, string $credentialId, ?string $actingUserId): ?array {
 		try {
-			$broker = Server::get(self::BROKER_CLASS);
+			$broker = $this->container->get(self::BROKER_CLASS);
 			$response = $broker->request(
 				$credentialId,
 				self::APP_ID,

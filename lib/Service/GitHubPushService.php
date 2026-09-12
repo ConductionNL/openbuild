@@ -42,7 +42,7 @@ declare(strict_types=1);
 namespace OCA\Buildiq\Service;
 
 use FilesystemIterator;
-use OCP\Server;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -65,8 +65,8 @@ class GitHubPushService {
 	 *
 	 * Every GitHub call now goes through the broker: Buildiq sends {method, path,
 	 * body} plus a credential UUID, and the broker injects the token. The token never
-	 * reaches this process. Resolved lazily (class_exists + Server::get), mirroring
-	 * GitHubAppSyncService; when the broker is absent we fail closed rather than fall
+	 * reaches this process. Resolved lazily (class_exists + the injected container),
+	 * mirroring GitHubAppSyncService; when the broker is absent we fail closed rather than fall
 	 * back to any token-bearing path.
 	 *
 	 * @var string
@@ -119,9 +119,12 @@ class GitHubPushService {
 	 * No HTTP client: this service no longer makes outbound calls of its own.
 	 *
 	 * @param LoggerInterface $logger Logger.
+	 * @param ContainerInterface $container DI container, resolves the OpenRegister
+	 *                                      broker at call time (never the global server).
 	 */
 	public function __construct(
 		private LoggerInterface $logger,
+		private readonly ContainerInterface $container,
 	) {
 	}//end __construct()
 
@@ -516,7 +519,7 @@ class GitHubPushService {
 		}
 
 		try {
-			$broker = Server::get(self::BROKER_CLASS);
+			$broker = $this->container->get(self::BROKER_CLASS);
 			$response = $broker->request(
 				$credentialId,
 				self::APP_ID,
@@ -567,8 +570,8 @@ class GitHubPushService {
 	 * truncating the body to {@see MAX_FAILURE_DETAIL_LENGTH}.
 	 *
 	 * Pulled out of {@see brokerCall()} so the detail-assembly logic is testable
-	 * without a live broker (`Server::get()` cannot resolve a real container in
-	 * a unit test).
+	 * without a live broker (a unit test hands in a container that resolves
+	 * nothing).
 	 *
 	 * @param int $status The upstream HTTP status code.
 	 * @param string $body The raw (unscrubbed) upstream response body.
